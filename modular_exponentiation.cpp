@@ -8,7 +8,7 @@ using namespace std;
 
 class BigInt{
 private:
-    static const uint64_t BASE = (1ULL << 32); // 2^32: Cơ số hỗ trợ phép trừ
+    static const uint64_t BASE = (1ULL << 32); // 2^32: Cơ số (từng block trong data)
     vector<uint32_t> data;
     void trim(); // Xóa số "0" ở đầu
 
