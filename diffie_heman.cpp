@@ -1,4 +1,4 @@
-#include "bigint.h"
+#include "diffie_heman.h"
 // Loại bỏ các chữ số "0" vô nghĩa
 /*
     @logic

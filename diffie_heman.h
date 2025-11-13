@@ -5,6 +5,7 @@
 #include <cctype>
 #include <algorithm>
 #include <ctime>
+#include <random>
 
 using namespace std;
 
@@ -35,6 +36,7 @@ public:
     BigInt operator+(const BigInt &other) const;
     BigInt operator-(const BigInt &other) const;
     BigInt operator*(const BigInt &other) const;
+    BigInt operator/(const BigInt &other) const;
     BigInt operator%(const BigInt &mod) const;
 
     // Toán tử I/O
@@ -44,4 +46,5 @@ public:
     static BigInt modular_exponentiation(BigInt base, BigInt exp, const BigInt &mod);
 
     static BigInt generate_private_key(BigInt p);
+
 };
