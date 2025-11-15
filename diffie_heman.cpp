@@ -773,8 +773,10 @@ BigInt BigInt::generate_prime(int bits)
 // Hàm tạo số nguyên tố an toàn
 /*
     @logic
-    1. Với số nguyên tố p được tạo ra
-    2. Kiểm ra số p - 1 / 2 có phải là 1 số nguyên tố không bằng Miller-Rabin
+    1. Sinh một số nguyên tố q (bits-1 bit) bằng Miller-Rabin
+    2. Tạo p = 2*q + 1
+    3. Kiểm tra p có phải là số nguyên tố bằng Miller-Rabin
+    4. Nếu đúng, p là safe prime (vì (p-1)/2 = q cũng là prime)
 */
 BigInt BigInt::generate_safe_prime(int bits)
 {
