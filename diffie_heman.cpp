@@ -679,24 +679,42 @@ BigInt BigInt::modular_exponentiation(BigInt base, BigInt exp, const BigInt &mod
 
 /*
     @logic
-
+    1. Sinh một số BigInt ngẫu nhiên với đúng 'bits' bit
+    2. Tính số block cần thiết (mỗi block = 32 bit) để chứa đủ bits
+    3. Sinh ngẫu nhiên từng block uint32_t bằng mt19937_64
+    4. Xử lý các bit thừa trong block cuối cùng để đảm bảo độ dài chính xác
+    5. Đặt bit cao nhất (MSB) của số để đảm bảo số có đúng độ dài
+    6. Đặt bit thấp nhất (LSB) là 1 để số lẻ (thường dùng trong prime generation)
+    7. Loại bỏ các block 0 dư thừa (trim)
 */
 BigInt BigInt::random_bits(int bits)
 {
     BigInt result(0);
+    // Tính số block cần dùng (mỗi block = 32 bit)
     int blocks = (bits + 31) / 32;
+    // Khởi tạo generator ngẫu nhiên
     mt19937_64 rng((unsigned)time(nullptr));
+    // Cấp phát memory cho số
     result.data.resize(blocks);
+    // Sinh ngẫu nhiên từng block
     for (int i = 0; i < blocks; i++)
         result.data[i] = (uint32_t)(rng() & 0xFFFFFFFFULL);
+    
+    // Xử lý các bit thừa trong block cuối cùng (chỉ giữ đúng số bit cần)
     int extra_bits = blocks * 32 - bits;
     if (extra_bits && !result.data.empty())
         result.data.back() &= (0xFFFFFFFFu >> extra_bits);
+
+    // Đặt bit cao nhất (MSB) = 1 để đảm bảo số có đúng độ dài
+    // Đặt bit thấp nhất (LSB) = 1 để số lẻ, thuận tiện cho prime generation
     if (!result.data.empty())
     {
+        // MSB
         result.data.back() |= (1U << (31 - (extra_bits ? extra_bits : 0)));
+        // LSB
         result.data[0] |= 1;
     }
+    // Loại bỏ các block 0 dư thừa ở cuối vector
     result.trim();
     return result;
 }
@@ -704,17 +722,32 @@ BigInt BigInt::random_bits(int bits)
 // Thuật toán Miller-Rabin - kiểm tra số nguyên tố
 /*
     @logic
+    1. Nếu n <= 3, kiểm tra trực tiếp: 2,3 là prime, <2 không phải prime.
+    2. Nếu n chẵn hoặc rỗng, không phải prime.
+    3. Viết n-1 = 2^s * d, với d lẻ (chia hết cho 2).
+    4. Lặp iterations lần để kiểm tra tính ngẫu nhiên:
+        a) Chọn a ngẫu nhiên trong [2, n-2]
+        b) Tính x = a^d % n
+        c) Nếu x == 1 hoặc x == n-1, tiếp tục vòng thử
+        d) Lặp r từ 1 đến s-1:
+            - x = x^2 % n
+            - Nếu x == n-1, thoát vòng lặp, coi a hợp lệ
+        e) Nếu không có x nào == n-1, n không phải prime, return false
+    5. Nếu qua tất cả iterations, return true
 */
 bool BigInt::is_prime_by_Miller_Rabin(const BigInt &n, int iterations)
 {
+    // Kiểm tra trường hợp nhỏ
     if (n == BigInt(2) || n == BigInt(3))
         return true;
     if (n < BigInt(2))
         return false;
     if (n.data.empty())
         return false;
+    // Loại số chẵn
     if ((n.data[0] & 1) == 0)
         return false;
+    // Viết n-1 = 2^s * d, với d lẻ
     BigInt d = n - BigInt(1);
     int s = 0;
     while (!d.data.empty() && (d.data[0] & 1) == 0)
@@ -729,28 +762,41 @@ bool BigInt::is_prime_by_Miller_Rabin(const BigInt &n, int iterations)
         d.trim();
         s++;
     }
+    // Khởi tạo random generator
     mt19937_64 rng((unsigned)time(nullptr));
     uniform_int_distribution<uint64_t> dist;
+
+    // Lặp kiểm tra iterations lần
     for (int i = 0; i < iterations; i++)
     {
+        // Chọn a ngẫu nhiên: 2 <= a <= n-2
         BigInt a = BigInt(dist(rng)) % (n - BigInt(4)) + BigInt(2);
+        // Tính x = a^d % n
         BigInt x = modular_exponentiation(a, d, n);
+        // Nếu x == 1 hoặc x == n-1, a hợp lệ → tiếp tục vòng thử khác
         if (x == BigInt(1) || x == n - BigInt(1))
             continue;
+        // Lặp kiểm tra các bình phương của x
         bool cont = false;
         for (int r = 0; r < s - 1; r++)
         {
+            // x = x^2 % n
             x = modular_exponentiation(x, BigInt(2), n);
             if (x == n - BigInt(1))
             {
+                // a hợp lệ
                 cont = true;
                 break;
             }
         }
+
+        // Nếu không có x nào == n-1, n không phải prime
         if (cont)
             continue;
         return false;
     }
+
+    // Nếu qua tất cả iterations thì kết thúc hàm
     return true;
 }
 
