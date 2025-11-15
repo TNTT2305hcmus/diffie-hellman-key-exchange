@@ -1,4 +1,4 @@
-#include "diffie_heman.h"
+#include "diffie_hellman.h"
 // Loại bỏ các chữ số "0" vô nghĩa
 /*
     @logic
