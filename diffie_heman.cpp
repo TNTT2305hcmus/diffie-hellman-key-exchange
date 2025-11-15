@@ -8,8 +8,10 @@
         Số 4590 sẽ được lưu trữ --> data = [0, 9, 5, 4]
         Nếu data = [0, 9, 5, 4 , 0] --> Số = 04590 --> Số 0 ở đầu vô nghĩa
 */
-void BigInt::trim() {
-    while (!data.empty() && data.back() == 0){
+void BigInt::trim()
+{
+    while (!data.empty() && data.back() == 0)
+    {
         data.pop_back();
     }
 }
@@ -28,12 +30,15 @@ void BigInt::trim() {
     3. Trích xuất khối bit cao
     Sau đó ta dịch phải 32 bit và ép kiểu để thu được block gồm 32 bit cao của số 64 bits
 */
-BigInt::BigInt(uint64_t initData) {
-    if (initData == 0){
+BigInt::BigInt(uint64_t initData)
+{
+    if (initData == 0)
+    {
         return;
     }
     data.push_back((uint32_t)(initData & 0xFFFFFFFF));
-    if (initData >> 32){
+    if (initData >> 32)
+    {
         data.push_back((uint32_t)(initData >> 32));
     }
 }
@@ -47,12 +52,17 @@ BigInt::BigInt(uint64_t initData) {
         - Là số: Cập nhật result
     2. Gán lại result cho *this (đối tượng hiện tại đang được khởi tạo)
 */
-BigInt::BigInt(const string &decString) {
+BigInt::BigInt(const string &decString)
+{
     BigInt result;
-    for (char c : decString){
-        if (!isdigit(c)){
+    for (char c : decString)
+    {
+        if (!isdigit(c))
+        {
             continue;
-        } else {
+        }
+        else
+        {
             result = result * 10 + BigInt(c - '0');
         }
     }
@@ -69,19 +79,24 @@ BigInt::BigInt(const string &decString) {
     2. Nếu size bằng nhau, thì ta so sánh từng giá trị trong BigInt
     3. So sánh từ giá trị cuối --> đầu (giá trị hàng lớn nhất trước)
 */
-bool BigInt::operator<(const BigInt &other) const {
-    if (data.size() != other.data.size()){
+bool BigInt::operator<(const BigInt &other) const
+{
+    if (data.size() != other.data.size())
+    {
         return data.size() < other.data.size();
     }
-    for (int i = (int)data.size() - 1; i >= 0; i--){
-        if (data[i] != other.data[i]){
+    for (int i = (int)data.size() - 1; i >= 0; i--)
+    {
+        if (data[i] != other.data[i])
+        {
             return data[i] < other.data[i];
         }
     }
     return false;
 }
 
-bool BigInt::operator>(const BigInt &other) const {
+bool BigInt::operator>(const BigInt &other) const
+{
     return other < *this;
 }
 
@@ -91,12 +106,13 @@ bool BigInt::operator==(const BigInt &other) const
     return data == other.data;
 }
 
-// Toán tử >= 
-bool BigInt::operator>=(const BigInt &other) const { 
-    return !(*this < other); 
+// Toán tử >=
+bool BigInt::operator>=(const BigInt &other) const
+{
+    return !(*this < other);
 }
 
-// Toán tử cộng 
+// Toán tử cộng
 /*
     @param other (BigInt cần cộng vào)
     @logic
@@ -104,7 +120,8 @@ bool BigInt::operator>=(const BigInt &other) const {
     2. Cộng từng chữ số theo vị trí tương ứng (cộng thêm carry)
     3. Sử dụng biến uint64_t carry làm số nhớ
 */
-BigInt BigInt::operator+(const BigInt &other) const{
+BigInt BigInt::operator+(const BigInt &other) const
+{
     // Khởi tạo và gán result có size của số lớn hơn
     BigInt result;
     uint64_t carry = 0;
@@ -112,16 +129,19 @@ BigInt BigInt::operator+(const BigInt &other) const{
     result.data.resize(max_size);
 
     // Duyệt để cộng từng giá trị
-    for (int i = 0; i < max_size; i++){
+    for (int i = 0; i < max_size; i++)
+    {
         // Cộng carry vào trước
         uint64_t sum = carry;
 
         // Vì 2 số có thể khác size. Nên ta cần kiểm tra
         // Nếu i nhỏ hơn thì ta cộng, i lớn hơn xem như cộng với 0
-        if (i < data.size()){
+        if (i < data.size())
+        {
             sum += data[i];
         }
-        if (i < other.data.size()){
+        if (i < other.data.size())
+        {
             sum += other.data[i];
         }
 
@@ -132,7 +152,8 @@ BigInt BigInt::operator+(const BigInt &other) const{
     }
 
     // Sau khi cộng hết, nếu carry != 0, cập nhật thêm 1 chữ số hàng cao nhất cho result
-    if (carry){
+    if (carry)
+    {
         result.data.push_back((uint32_t)(carry));
     }
     result.trim();
@@ -140,7 +161,8 @@ BigInt BigInt::operator+(const BigInt &other) const{
 }
 
 // Hỗ trợ trường hợp cộng số nguyên nhỏ, giúp tăng hiệu suất thay vì ép sang kiểu BigInt
-BigInt BigInt::operator+(uint64_t small) const {
+BigInt BigInt::operator+(uint64_t small) const
+{
     BigInt res = *this;
 
     uint32_t low = (uint32_t)small;
@@ -152,15 +174,18 @@ BigInt BigInt::operator+(uint64_t small) const {
 
     size_t i = 1;
 
-    if (high || carry) {
+    if (high || carry)
+    {
         uint64_t sum2 = (uint64_t)res.data[1] + high + carry;
         res.data[1] = (uint32_t)sum2;
         carry = sum2 >> 32;
         i = 2;
     }
 
-    while (carry) {
-        if (i >= res.data.size()) res.data.push_back(0);
+    while (carry)
+    {
+        if (i >= res.data.size())
+            res.data.push_back(0);
         uint64_t s = (uint64_t)res.data[i] + carry;
         res.data[i] = (uint32_t)s;
         carry = s >> 32;
@@ -182,8 +207,10 @@ BigInt BigInt::operator+(uint64_t small) const {
         4.1. carry = -1: Có mượn
         4.2. carry = 0: Chưa mượn
 */
-BigInt BigInt::operator-(const BigInt &other) const {
-    if (*this < other){
+BigInt BigInt::operator-(const BigInt &other) const
+{
+    if (*this < other)
+    {
         cout << "Lỗi, không thể thực hiện phép trừ cho ra kết quả âm" << endl;
         return BigInt(0);
     }
@@ -192,7 +219,8 @@ BigInt BigInt::operator-(const BigInt &other) const {
     result.data.resize(data.size());
     int64_t carry = 0;
 
-    for (int i = 0; i < data.size(); i++){
+    for (int i = 0; i < data.size(); i++)
+    {
         // Công thức:
         // diff = số hiện tại - số bị trừ + số mượn trước đó
         // Vì other có thể có size nhỏ hơn, nên cần kiểm tra chữ số i và other.data.size
@@ -204,33 +232,42 @@ BigInt BigInt::operator-(const BigInt &other) const {
         // Nghĩa là số trừ nhỏ hơn số bị trừ.
         // Ta cần mượn 1 chữ số hàng tiếp theo để trừ như phép trừ thông thường
         // Đánh dấu carry để trả lại khi xét hàng tiếp theo
-        if (diff < 0){
+        if (diff < 0)
+        {
             diff += BASE;
             carry = -1;
-        } else{
+        }
+        else
+        {
             carry = 0;
         }
         result.data[i] = (uint32_t)(diff);
     }
-    result.trim();  
+    result.trim();
     return result;
 }
 
 // Thuật toán nhân karatsuba
-BigInt BigInt::karatsuba_multiply(const BigInt &a, const BigInt &b) {
-    if (a.data.size() < 64 || b.data.size() < 64) {
+BigInt BigInt::karatsuba_multiply(const BigInt &a, const BigInt &b)
+{
+    if (a.data.size() < 64 || b.data.size() < 64)
+    {
         BigInt result;
         result.data.assign(a.data.size() + b.data.size(), 0);
-        for (size_t i = 0; i < a.data.size(); ++i) {
+        for (size_t i = 0; i < a.data.size(); ++i)
+        {
             uint64_t carry = 0;
-            for (size_t j = 0; j < b.data.size(); ++j) {
+            for (size_t j = 0; j < b.data.size(); ++j)
+            {
                 uint64_t cur = (uint64_t)result.data[i + j] + (uint64_t)a.data[i] * b.data[j] + carry;
                 result.data[i + j] = (uint32_t)(cur & 0xFFFFFFFF);
                 carry = cur >> 32;
             }
             size_t k = i + b.data.size();
-            while (carry) {
-                if (k >= result.data.size()) result.data.push_back(0);
+            while (carry)
+            {
+                if (k >= result.data.size())
+                    result.data.push_back(0);
                 uint64_t cur = (uint64_t)result.data[k] + carry;
                 result.data[k] = (uint32_t)(cur & 0xFFFFFFFF);
                 carry = cur >> 32;
@@ -245,11 +282,15 @@ BigInt BigInt::karatsuba_multiply(const BigInt &a, const BigInt &b) {
     size_t m = n / 2;
     BigInt high1, low1, high2, low2;
     low1.data.assign(a.data.begin(), a.data.begin() + min(a.data.size(), m));
-    if (a.data.size() > m) high1.data.assign(a.data.begin() + m, a.data.end());
-    else high1 = BigInt(0);
+    if (a.data.size() > m)
+        high1.data.assign(a.data.begin() + m, a.data.end());
+    else
+        high1 = BigInt(0);
     low2.data.assign(b.data.begin(), b.data.begin() + min(b.data.size(), m));
-    if (b.data.size() > m) high2.data.assign(b.data.begin() + m, b.data.end());
-    else high2 = BigInt(0);
+    if (b.data.size() > m)
+        high2.data.assign(b.data.begin() + m, b.data.end());
+    else
+        high2 = BigInt(0);
 
     BigInt z0 = karatsuba_multiply(low1, low2);
     BigInt z1 = karatsuba_multiply(low1 + high1, low2 + high2);
@@ -257,18 +298,23 @@ BigInt BigInt::karatsuba_multiply(const BigInt &a, const BigInt &b) {
 
     BigInt result;
     result.data.assign((n + 1) * 2, 0);
-    for (size_t i = 0; i < z0.data.size(); ++i) result.data[i] += z0.data[i];
+    for (size_t i = 0; i < z0.data.size(); ++i)
+        result.data[i] += z0.data[i];
     BigInt temp = z1 - z2 - z0;
-    for (size_t i = 0; i < temp.data.size(); ++i) result.data[i + m] += temp.data[i];
-    for (size_t i = 0; i < z2.data.size(); ++i) result.data[i + 2 * m] += z2.data[i];
+    for (size_t i = 0; i < temp.data.size(); ++i)
+        result.data[i + m] += temp.data[i];
+    for (size_t i = 0; i < z2.data.size(); ++i)
+        result.data[i + 2 * m] += z2.data[i];
 
     uint64_t carry = 0;
-    for (size_t i = 0; i < result.data.size(); ++i) {
+    for (size_t i = 0; i < result.data.size(); ++i)
+    {
         uint64_t cur = (uint64_t)result.data[i] + carry;
         result.data[i] = (uint32_t)(cur & 0xFFFFFFFF);
         carry = cur >> 32;
     }
-    while (carry) {
+    while (carry)
+    {
         result.data.push_back((uint32_t)(carry & 0xFFFFFFFF));
         carry >>= 32;
     }
@@ -288,35 +334,55 @@ BigInt BigInt::operator*(const BigInt &other) const
 }
 
 // Xử lý thêm trường hợp nhân số nhỏ
-BigInt BigInt::operator*(uint64_t small) const {
+/*
+    Tóm tắt ý tưởng:
+    - uint64_t small là một số 64 bit cần nhân
+    - 1 block trong BigInt chỉ lưu 32 bit
+    - Cần chia small là 2 phần low và high và nhân với BigInt
+    - Tức là data(32 bits) * small(64 bits) = data(32 bits) * [low(32 bits) + high >> 32 (32 bits)]
+*/
+BigInt BigInt::operator*(uint64_t small) const
+{
     BigInt res;
-    if (small == 0) return BigInt(0);
+    if (small == 0)
+        return BigInt(0);
 
+    // Tách small thành 2 giá trị low và high, mỗi giá trị lần lượt chứa 32 bit thấp và 32 bit cao
     uint32_t low = (uint32_t)(small);
     uint32_t high = (uint32_t)(small >> 32);
 
+    // Khi nhân vào, data sẽ tăng tối đa 2 block
     res.data.resize(data.size() + 2);
-    
-    uint64_t carry = 0;
-    for (size_t i = 0; i < data.size(); i++) {
+
+    uint64_t carry = 0; // Lưu giá trị nhớ từ phép toán với 64 bits sang 32 bits
+    for (size_t i = 0; i < data.size(); i++)
+    {
+        // Thực hiện nhân data[i] với low và high (nhân 2 số 32 bit sẽ sinh ra số tối đa 64 bit)
         uint64_t p1 = (uint64_t)data[i] * low;
         uint64_t p2 = (uint64_t)data[i] * high;
 
+        // Thực hiện theo thuật toán nhân 2 số không dấu
+
         uint64_t sum = p1 + carry + res.data[i];
-        res.data[i] = (uint32_t)sum;
-        carry = sum >> 32;
+        res.data[i] = (uint32_t)sum; // Lưu 32 bits thấp
+        carry = sum >> 32;           // Giữ 32 bits cao
 
         uint64_t sum2 = (uint64_t)res.data[i + 1] + (p2 + (carry));
-        res.data[i + 1] = (uint32_t)sum2;
-        carry = sum2 >> 32;
+        res.data[i + 1] = (uint32_t)sum2; // Lưu 32 bits thấp
+        carry = sum2 >> 32;               // Giữ 32 bits cao
     }
 
     size_t idx = data.size();
-    while (carry) {
-        if (idx >= res.data.size()) res.data.push_back(0);
-        uint64_t s = (uint64_t)res.data[idx] + carry;
-        res.data[idx] = (uint32_t)s;
-        carry = s >> 32;
+
+    // Xử lý carry còn thừa
+    while (carry)
+    {
+        if (idx >= res.data.size())
+            res.data.push_back((uint32_t)0); // Nếu còn thừa carry và các block đã full, tạo block mới
+
+        uint64_t sum = (uint64_t)res.data[idx] + carry;
+        res.data[idx] = (uint32_t)sum; // Lưu 32 bits thấp
+        carry = sum >> 32;             // Giữ 32 bits cao
         idx++;
     }
 
@@ -324,21 +390,30 @@ BigInt BigInt::operator*(uint64_t small) const {
     return res;
 }
 
-
 // Toán tử chia
-BigInt BigInt::operator/(const BigInt &other) const {
-    if (other == BigInt(0)) throw runtime_error("Division by zero!");
+BigInt BigInt::operator/(const BigInt &other) const
+{
+    if (other == BigInt(0))
+        throw runtime_error("Division by zero!");
     BigInt quotient, remainder;
     vector<uint32_t> quot_data;
     quot_data.reserve(data.size());
     remainder = BigInt(0);
-    for (int i = (int)data.size() - 1; i >= 0; i--) {
+    for (int i = (int)data.size() - 1; i >= 0; i--)
+    {
         remainder = remainder * BASE + BigInt((uint64_t)data[i]);
         uint32_t q = 0, l = 0, r = 0xFFFFFFFFu;
-        while (l <= r) {
+        while (l <= r)
+        {
             uint32_t m = l + ((r - l) >> 1);
             BigInt prod = other * BigInt((uint64_t)m);
-            if (!(remainder < prod)) { q = m; l = m + 1; } else r = m - 1;
+            if (!(remainder < prod))
+            {
+                q = m;
+                l = m + 1;
+            }
+            else
+                r = m - 1;
         }
         quot_data.push_back(q);
         remainder = remainder - other * BigInt((uint64_t)q);
@@ -350,8 +425,10 @@ BigInt BigInt::operator/(const BigInt &other) const {
 }
 
 // Thuật toán barrett mod
-BigInt BigInt::barrett_mod(const BigInt &a, const BigInt &mod) {
-    if (a < mod) return a;
+BigInt BigInt::barrett_mod(const BigInt &a, const BigInt &mod)
+{
+    if (a < mod)
+        return a;
     size_t k = mod.data.size();
     BigInt base_pow(0);
     base_pow.data.assign(2 * k + 1, 0);
@@ -366,7 +443,8 @@ BigInt BigInt::barrett_mod(const BigInt &a, const BigInt &mod) {
     BigInt q3 = q2 >> shift2;
 
     BigInt r = a - q3 * mod;
-    while (!(r < mod)) {
+    while (!(r < mod))
+    {
         r = r - mod;
     }
     return r;
@@ -383,30 +461,61 @@ BigInt BigInt::operator%(const BigInt &mod) const
 }
 
 // Hàm nhân mod áp dụng thừa kế thuật toán barrett mod để tăng hiệu suất
-BigInt BigInt::mod_mul(BigInt a, BigInt b, const BigInt &mod) {
+BigInt BigInt::mod_mul(BigInt a, BigInt b, const BigInt &mod)
+{
     return barrett_mod(a * b, mod);
 }
 
-// Toán tử dịch bit
-BigInt BigInt::operator>>(int shift) const {
-    if (shift == 0) return *this;
+// Toán tử dịch bit sang phải
+BigInt BigInt::operator>>(int shift) const
+{
+    // Nếu số bit cần dịch <= 0 thì không thực hiện dịch
+    if (shift <= 0)
+        return *this;
+
+    // Tính tổng số bit của data hiện tại, nếu số bit dịch lớn hơn tổng thì trả về 0
     int totalBits = (int)data.size() * 32;
-    if (shift >= totalBits) return BigInt(0);
+    if (shift >= totalBits)
+        return BigInt(0);
+
     BigInt result;
-    int full_blocks = shift / 32;
-    int bit_shift = shift % 32;
-    result.data.resize(data.size() - full_blocks);
-    for (size_t i = 0; i < result.data.size(); ++i) {
-        uint64_t low = data[i + full_blocks];
+    int full_blocks = shift / 32;                  // Tính số block cần xóa khi dịch
+    int bit_shift = shift % 32;                    // Tính số bit cần dịch còn lại
+    result.data.resize(data.size() - full_blocks); // Khởi tạo vùng nhớ mới
+
+    // Ứng với mỗi block dữ liệu
+    for (size_t i = 0; i < result.data.size(); ++i)
+    {
+        // Vì đã bỏ các block cần dịch full, block i sau khi dịch chính là block i + full_blocks trước khi dịch
+        /*
+            Vì BigInt biểu diễn dữ liệu từ phải sang trái, VD: [0, 5] tức là 50
+            Nên khi dịch phải ta cần dữ liệu của block hiện tại và block bên phải của nó
+        */
+
+        // Lấy dữ liệu block hiện tại (32 bit thấp)
+        uint64_t low = data[i + full_blocks]; // Lúc này có 32 bit đầu là 0 và 32 bit sau lưu giá trị của block
+
+        // Lấy dữ liệu block tiếp theo, nếu có (32 bit cao)
         uint64_t high = 0;
-        if (i + full_blocks + 1 < data.size()) high = data[i + full_blocks + 1];
+        if (i + full_blocks + 1 < data.size())
+            high = data[i + full_blocks + 1]; // Lúc này có 32 bit đầu là 0 và 32 bit sau lưu giá trị của block
+
+        /*
+            Gộp 32 bit cao và 32 bit thấp bằng cách:
+            Lấy high dịch trái 32 bit => high có 32 bit đầu là giá trị của block sau và 32 bit cuối là 0
+            Lấy kết quả OR với low (Vì bit nào OR với 0 cũng bằng chính nó)
+            Ta thu được kết quả có 32 bit đầu là high và 32 bit cuối là low
+        */
         uint64_t combined = (high << 32) | low;
+
+        // Lấy giá trị đã gộp dịch phải số bit còn lại để đưa giá trị của block sau sang block trước
+        // &OxFFFFFFFFu để đảm bảo chỉ lấy đúng 32 bit thấp
+        // Lưu giá trị vào block
         result.data[i] = (uint32_t)((combined >> bit_shift) & 0xFFFFFFFFu);
     }
     result.trim();
     return result;
 }
-
 
 // Xuất
 /*
@@ -417,13 +526,16 @@ BigInt BigInt::operator>>(int shift) const {
     2. Ý tưởng chính: Chia liên tục cho 10 và lấy phần dư làm chữ số
     3. Chuyển chữ số này sang chuỗi decString để xuất ra màn hình
 */
-ostream &operator<<(ostream &os, const BigInt &number){
-    if (number.data.empty()){
+ostream &operator<<(ostream &os, const BigInt &number)
+{
+    if (number.data.empty())
+    {
         return os << 0;
     }
     BigInt temp = number;
     string decString;
-    while (!(temp == BigInt(0))){
+    while (!(temp == BigInt(0)))
+    {
         BigInt q;         // Thương
         uint64_t rem = 0; // Số dư
         q.data.resize(temp.data.size());
@@ -433,7 +545,8 @@ ostream &operator<<(ostream &os, const BigInt &number){
             1. Ví dụ với hệ cơ số 10: BASE = 10
             2. rem << 32 --> Số dư từ bước trước dịch trái 32 bit (Nghĩa là nhân với BASE)
         */
-        for (int i = (int)temp.data.size() - 1; i >= 0; --i){
+        for (int i = (int)temp.data.size() - 1; i >= 0; --i)
+        {
             uint64_t cur = (rem << 32) + temp.data[i];
             q.data[i] = (uint32_t)(cur / 10);
             rem = cur % 10;
@@ -457,7 +570,6 @@ ostream &operator<<(ostream &os, const BigInt &number){
     os << decString;
     return os;
 }
-
 
 // Toán tử mod_exp
 /*
@@ -509,15 +621,19 @@ BigInt BigInt::modular_exponentiation(BigInt base, BigInt exp, const BigInt &mod
     @logic
 
 */
-BigInt BigInt::random_bits(int bits) {
+BigInt BigInt::random_bits(int bits)
+{
     BigInt result(0);
     int blocks = (bits + 31) / 32;
     mt19937_64 rng((unsigned)time(nullptr));
     result.data.resize(blocks);
-    for (int i = 0; i < blocks; i++) result.data[i] = (uint32_t)(rng() & 0xFFFFFFFFULL);
+    for (int i = 0; i < blocks; i++)
+        result.data[i] = (uint32_t)(rng() & 0xFFFFFFFFULL);
     int extra_bits = blocks * 32 - bits;
-    if (extra_bits && !result.data.empty()) result.data.back() &= (0xFFFFFFFFu >> extra_bits);
-    if (!result.data.empty()) {
+    if (extra_bits && !result.data.empty())
+        result.data.back() &= (0xFFFFFFFFu >> extra_bits);
+    if (!result.data.empty())
+    {
         result.data.back() |= (1U << (31 - (extra_bits ? extra_bits : 0)));
         result.data[0] |= 1;
     }
@@ -529,16 +645,23 @@ BigInt BigInt::random_bits(int bits) {
 /*
     @logic
 */
-bool BigInt::is_prime_by_Miller_Rabin(const BigInt &n, int iterations) {
-    if (n == BigInt(2) || n == BigInt(3)) return true;
-    if (n < BigInt(2)) return false;
-    if (n.data.empty()) return false;
-    if ((n.data[0] & 1) == 0) return false;
+bool BigInt::is_prime_by_Miller_Rabin(const BigInt &n, int iterations)
+{
+    if (n == BigInt(2) || n == BigInt(3))
+        return true;
+    if (n < BigInt(2))
+        return false;
+    if (n.data.empty())
+        return false;
+    if ((n.data[0] & 1) == 0)
+        return false;
     BigInt d = n - BigInt(1);
     int s = 0;
-    while (!d.data.empty() && (d.data[0] & 1) == 0) {
+    while (!d.data.empty() && (d.data[0] & 1) == 0)
+    {
         uint64_t carry = 0;
-        for (int i = (int)d.data.size() - 1; i >= 0; --i) {
+        for (int i = (int)d.data.size() - 1; i >= 0; --i)
+        {
             uint64_t cur = (carry << 32) + d.data[i];
             d.data[i] = (uint32_t)(cur >> 1);
             carry = cur & 1;
@@ -548,16 +671,24 @@ bool BigInt::is_prime_by_Miller_Rabin(const BigInt &n, int iterations) {
     }
     mt19937_64 rng((unsigned)time(nullptr));
     uniform_int_distribution<uint64_t> dist;
-    for (int i = 0; i < iterations; i++) {
+    for (int i = 0; i < iterations; i++)
+    {
         BigInt a = BigInt(dist(rng)) % (n - BigInt(4)) + BigInt(2);
         BigInt x = modular_exponentiation(a, d, n);
-        if (x == BigInt(1) || x == n - BigInt(1)) continue;
+        if (x == BigInt(1) || x == n - BigInt(1))
+            continue;
         bool cont = false;
-        for (int r = 0; r < s - 1; r++) {
+        for (int r = 0; r < s - 1; r++)
+        {
             x = modular_exponentiation(x, BigInt(2), n);
-            if (x == n - BigInt(1)) { cont = true; break; }
+            if (x == n - BigInt(1))
+            {
+                cont = true;
+                break;
+            }
         }
-        if (cont) continue;
+        if (cont)
+            continue;
         return false;
     }
     return true;
@@ -569,10 +700,13 @@ bool BigInt::is_prime_by_Miller_Rabin(const BigInt &n, int iterations) {
     1. Tạo 1 số nguyên tố từ hàm random_bits
     2. Kiểm tra lại xem tính chính xác của số nguyên tố p
 */
-BigInt BigInt::generate_prime(int bits) {
-    while (true) {
+BigInt BigInt::generate_prime(int bits)
+{
+    while (true)
+    {
         BigInt p = random_bits(bits);
-        if (is_prime_by_Miller_Rabin(p)) return p;
+        if (is_prime_by_Miller_Rabin(p))
+            return p;
     }
 }
 
@@ -582,12 +716,15 @@ BigInt BigInt::generate_prime(int bits) {
     1. Với số nguyên tố p được tạo ra
     2. Kiểm ra số p - 1 / 2 có phải là 1 số nguyên tố không bằng Miller-Rabin
 */
-BigInt BigInt::generate_safe_prime(int bits) {
+BigInt BigInt::generate_safe_prime(int bits)
+{
     int q_bits = bits - 1;
-    while (true) {
+    while (true)
+    {
         BigInt q = BigInt::generate_prime(q_bits);
         BigInt p = q * 2 + 1;
-        if (BigInt::is_prime_by_Miller_Rabin(p, 7)){
+        if (BigInt::is_prime_by_Miller_Rabin(p, 7))
+        {
             return p;
         }
     }
