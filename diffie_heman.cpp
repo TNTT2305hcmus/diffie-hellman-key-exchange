@@ -529,7 +529,7 @@ BigInt BigInt::random_bits(int bits) {
 /*
     @logic
 */
-bool BigInt::is_prime_by_Miller_Rabin(const BigInt &n, int iterations = 7) {
+bool BigInt::is_prime_by_Miller_Rabin(const BigInt &n, int iterations) {
     if (n == BigInt(2) || n == BigInt(3)) return true;
     if (n < BigInt(2)) return false;
     if (n.data.empty()) return false;
@@ -569,7 +569,7 @@ bool BigInt::is_prime_by_Miller_Rabin(const BigInt &n, int iterations = 7) {
     1. Tạo 1 số nguyên tố từ hàm random_bits
     2. Kiểm tra lại xem tính chính xác của số nguyên tố p
 */
-BigInt BigInt::generate_prime(int bits = 512) {
+BigInt BigInt::generate_prime(int bits) {
     while (true) {
         BigInt p = random_bits(bits);
         if (is_prime_by_Miller_Rabin(p)) return p;
@@ -582,7 +582,7 @@ BigInt BigInt::generate_prime(int bits = 512) {
     1. Với số nguyên tố p được tạo ra
     2. Kiểm ra số p - 1 / 2 có phải là 1 số nguyên tố không bằng Miller-Rabin
 */
-BigInt BigInt::generate_safe_prime(int bits = 512) {
+BigInt BigInt::generate_safe_prime(int bits) {
     int q_bits = bits - 1;
     while (true) {
         BigInt q = BigInt::generate_prime(q_bits);

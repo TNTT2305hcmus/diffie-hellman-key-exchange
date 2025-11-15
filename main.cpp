@@ -1,5 +1,6 @@
 #include <iostream>
 #include "diffie_heman.h"
+#include "diffie_heman.cpp"
 using namespace std;
 
 int main(int argc, char **argv)

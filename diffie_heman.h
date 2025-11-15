@@ -1,4 +1,4 @@
-#pragma once bigint.h
+#pragma once
 #include <iostream>
 #include <vector>
 #include <cstdint>
@@ -71,3 +71,4 @@ public:
     static BigInt generate_private_key(BigInt p);
 
 };
+
