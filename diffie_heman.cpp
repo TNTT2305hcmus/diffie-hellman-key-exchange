@@ -247,22 +247,36 @@ BigInt BigInt::operator-(const BigInt &other) const
     return result;
 }
 
-// Thuật toán nhân karatsuba
+// Thuật toán nhân Karatsuba
+// Nhân hai số lớn a và b bằng phương pháp chia để trị:
+// - Chia số lớn a và b thành 2 nửa (high và low)
+// - Nhân 3 phép nhân nhỏ: z0 = low1*low2, z2 = high1*high2, z1 = (low1+high1)*(low2+high2)
+// - Tính temp = z1 - z2 - z0
+// - Kết hợp: result = z2*(B^(2*m)) + temp*(B^m) + z0, B = 2^32
+// - Nếu số quá nhỏ (<64 block), dùng nhân bình thường
+// - Trim để loại bỏ các block 0 dư thừa
 BigInt BigInt::karatsuba_multiply(const BigInt &a, const BigInt &b)
 {
+    // Nếu một trong hai số quá nhỏ (<64 block), dùng nhân bình thường
     if (a.data.size() < 64 || b.data.size() < 64)
     {
         BigInt result;
+        // Cấp phát đủ chỗ cho tích
         result.data.assign(a.data.size() + b.data.size(), 0);
+        // Nhân từng block uint32_t
         for (size_t i = 0; i < a.data.size(); ++i)
         {
             uint64_t carry = 0;
             for (size_t j = 0; j < b.data.size(); ++j)
             {
+                // Cộng tích block hiện tại + carry vào result
                 uint64_t cur = (uint64_t)result.data[i + j] + (uint64_t)a.data[i] * b.data[j] + carry;
+                // lưu 32 bit thấp
                 result.data[i + j] = (uint32_t)(cur & 0xFFFFFFFF);
+                // 32 bit cao sang carry
                 carry = cur >> 32;
             }
+            // Nếu còn carry, cộng vào các block tiếp theo
             size_t k = i + b.data.size();
             while (carry)
             {
@@ -274,38 +288,56 @@ BigInt BigInt::karatsuba_multiply(const BigInt &a, const BigInt &b)
                 ++k;
             }
         }
+        // loại bỏ block 0 dư thừa
         result.trim();
         return result;
     }
 
+    // Nếu số lớn, dùng đệ quy Karatsuba
     size_t n = max(a.data.size(), b.data.size());
+    // Chia đôi số block
     size_t m = n / 2;
+
+     // Chia a và b thành 2 nửa: high và low
     BigInt high1, low1, high2, low2;
+    // nửa thấp của a
     low1.data.assign(a.data.begin(), a.data.begin() + min(a.data.size(), m));
+    // nửa cao của a
     if (a.data.size() > m)
         high1.data.assign(a.data.begin() + m, a.data.end());
     else
         high1 = BigInt(0);
+
+    // nửa thấp của b
     low2.data.assign(b.data.begin(), b.data.begin() + min(b.data.size(), m));
+    // nửa cao của b
     if (b.data.size() > m)
         high2.data.assign(b.data.begin() + m, b.data.end());
     else
         high2 = BigInt(0);
 
-    BigInt z0 = karatsuba_multiply(low1, low2);
-    BigInt z1 = karatsuba_multiply(low1 + high1, low2 + high2);
-    BigInt z2 = karatsuba_multiply(high1, high2);
+    // Đệ quy: nhân các nửa nhỏ
+    BigInt z0 = karatsuba_multiply(low1, low2);    // z0 = low1*low2
+    BigInt z1 = karatsuba_multiply(low1 + high1, low2 + high2);  // z1 = (low1+high1)*(low2+high2)
+    BigInt z2 = karatsuba_multiply(high1, high2);    // z2 = high1*high2
 
+    // Kết hợp kết quả
     BigInt result;
+    // cấp phát đủ chỗ
     result.data.assign((n + 1) * 2, 0);
+    // Thêm z0 vào phần thấp của result
     for (size_t i = 0; i < z0.data.size(); ++i)
         result.data[i] += z0.data[i];
+    // Tính temp = z1 - z2 - z0 (phần trung gian)
     BigInt temp = z1 - z2 - z0;
+    // Thêm temp vào giữa result, bắt đầu từ vị trí m
     for (size_t i = 0; i < temp.data.size(); ++i)
         result.data[i + m] += temp.data[i];
+    // Thêm z2 vào nửa cao của result, bắt đầu từ 2*m
     for (size_t i = 0; i < z2.data.size(); ++i)
         result.data[i + 2 * m] += z2.data[i];
 
+    // Xử lý carry toàn bộ result
     uint64_t carry = 0;
     for (size_t i = 0; i < result.data.size(); ++i)
     {
@@ -318,6 +350,7 @@ BigInt BigInt::karatsuba_multiply(const BigInt &a, const BigInt &b)
         result.data.push_back((uint32_t)(carry & 0xFFFFFFFF));
         carry >>= 32;
     }
+    // loại bỏ block 0 dư
     result.trim();
     return result;
 }
@@ -424,29 +457,56 @@ BigInt BigInt::operator/(const BigInt &other) const
     return quotient;
 }
 
-// Thuật toán barrett mod
+// Thuật toán Barrett reduction (Barrett modulo)
+// Dùng để tính a % mod nhanh hơn với số lớn
+/*
+Các bước chính:
+   - Chia a ra các phần cao (q1) bằng shift1
+   - Nhân với mu → q2
+   - Lấy phần cao của q2 → q3, gần bằng thương a / mod
+   - Tính dư tạm: r = a - q3 * mod
+   - Nếu r >= mod, trừ thêm mod cho đến khi r < mod
+*/
 BigInt BigInt::barrett_mod(const BigInt &a, const BigInt &mod)
 {
+    // Nếu a < mod thì modulo chính là a
     if (a < mod)
         return a;
+    
+    // k = số lượng block uint32_t của mod
     size_t k = mod.data.size();
+    // Tạo số base_pow = B^(2k), B = 2^32
     BigInt base_pow(0);
     base_pow.data.assign(2 * k + 1, 0);
+    // base_pow = B^(2k)
     base_pow.data[2 * k] = 1;
     base_pow.trim();
+
+    // Tính mu = floor(B^(2k) / mod)
+    // Đây là hằng số dùng trong Barrett reduction
     BigInt mu = base_pow / mod;
 
+    // Xác định các shift
+    // shift1 = (k-1)*32, shift2 = (k+1)*32
+    // Dùng để lấy các phần cao của a cho tính toán
     int shift1 = (int)((k > 0 ? (k - 1) : 0) * 32);
     int shift2 = (int)((k + 1) * 32);
+    // q1 = a >> shift1 (lấy phần cao của a)
     BigInt q1 = a >> shift1;
+    // q2 = q1 * mu
     BigInt q2 = q1 * mu;
+    // q3 = q2 >> shift2 (lấy phần cao của q2)
     BigInt q3 = q2 >> shift2;
-
+    // r = a - q3 * mod
+    // Đây là giá trị dư tạm thời, có thể >= mod
     BigInt r = a - q3 * mod;
+
+    // Nếu r >= mod, trừ mod cho đến khi r < mod
     while (!(r < mod))
     {
         r = r - mod;
     }
+    // Trả về kết quả modulo
     return r;
 }
 
